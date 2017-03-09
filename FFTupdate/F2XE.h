@@ -8,7 +8,7 @@
 #ifndef F2XE_H_
 #define F2XE_H_
 
-
+#include <cinttypes>
 #include <cstring>
 #include <memory>
 #include <x86intrin.h>
@@ -55,6 +55,7 @@ void F2XE<N>::setIrred(const std::shared_ptr<F2XE<N>>& irred)
 {
 	F2XE<N>::irred = irred;
 }
+
 
 template<unsigned int N>
 F2XE<N>::F2XE(){}

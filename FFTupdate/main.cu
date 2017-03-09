@@ -8,9 +8,12 @@
 
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 #include "ChunkTesting.cuh"
 
 int main(int argc, char* argv[])
 {
 	std::vector<int> a;
+	std::unordered_map<int, int> b;
+
 }
