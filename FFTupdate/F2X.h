@@ -10,6 +10,7 @@
 #include <vector>
 #include <memory>
 #include "utils.h"
+#include "GF2.h"
 
 typedef unsigned long long ValType;
 typedef unsigned long long DegType;
@@ -27,8 +28,8 @@ private:
 	ValType& operator[](size_t index);
 	const ValType& operator [](size_t index) const;
 	void flipCoefficient(DegType d);
-	void setCoefficient(DegType d);
-	DegType getCoefficient(DegType d);
+	void setCoefficient(DegType d, const GF2& a);
+	GF2 getCoefficient(DegType d) const;
 public:
 	F2X();
 	F2X(unsigned int i);
@@ -45,6 +46,10 @@ public:
 	F2X operator/ (const F2X& a) const;
 	F2X& operator/= (const F2X& a);
 
+	F2X operator<< (unsigned int a) const;
+	const F2X& operator<<= (unsigned int a);
+	F2X operator>> (unsigned int a) const;
+	const F2X& operator>>= (unsigned int a);
 };
 
 
