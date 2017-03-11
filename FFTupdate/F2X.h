@@ -9,6 +9,7 @@
 #define F2X_H_
 #include <vector>
 #include <memory>
+#include <cstdbool>
 #include "utils.h"
 #include "GF2.h"
 
@@ -38,6 +39,9 @@ public:
 	F2X& operator= (const F2X& a);
 
 	// Mathematical operators
+	void flipCoefficient(DegType d);
+	void setCoefficient(DegType d, const GF2& a);
+	GF2 getCoefficient(DegType d) const;
 	DegType deg() const;
 	F2X operator+ (const F2X& a) const;
 	F2X& operator+= (const F2X& a);
@@ -45,6 +49,8 @@ public:
 	F2X& operator*= (const F2X& a);
 	F2X operator/ (const F2X& a) const;
 	F2X& operator/= (const F2X& a);
+	bool operator== (const F2X& a) const;
+	bool operator!= (const F2X& a) const;
 
 	F2X operator<< (unsigned int a) const;
 	const F2X& operator<<= (unsigned int a);

@@ -10,9 +10,11 @@
 
 #include <cinttypes>
 #include <cstring>
+#include <cstdbool>
 #include <memory>
 #include <x86intrin.h>
 #include "utils.h"
+#include "F2X.h"
 
 extern __m128i clmul_mask;
 
@@ -20,10 +22,12 @@ typedef uint64_t ValType;
 template<unsigned int N>
 class F2XE {
 private:
+	static const unsigned int bitsInEntry = sizeof(ValType) * BITS_IN_BYTE;
 	static const unsigned int len = CIEL(N, sizeof(ValType));
 	static std::shared_ptr<F2XE<N>> irred;
 	ValType val[CIEL(N,sizeof(ValType))];
-
+	F2X toStdRepr() const;
+	bool getCoefficient(DegType i) const;
 public:
 	F2XE();
 	F2XE(const F2XE<N>& a);
@@ -168,6 +172,33 @@ void F2XE<N>::setUnit()
 	this->val[0] = 1;
 }
 
+template <unsigned int N>
+F2X F2XE<N>::toStdRepr() const
+{
+	F2X ans(N - 1);
+	GF2 a(true);
+	for (unsigned int i = 0 ; i < N - 1 ; ++i)
+	{
+		if (this->getCoefficient(i))
+		{
+			ans.setCoefficient(a);
+		}
+	}
+	return ans;
+}
+
+template <unsigned int N>
+bool F2XE<N>::getCoefficient(DegType i) const
+{
+	auto cellIdx = i / this->bitsInEntry;
+	if (cellIdx > this->len)
+	{
+		return false;
+	}
+	auto cell = this->val[cellIdx];
+	// If i-th bit in the representation is on - return true, else - false.
+	return cell & (1 << (i % this->bitsInEntry)) == 0 ? false : true;
+}
 
 template<unsigned int N>
 F2XE<N> F2XE<N>::operator~() const
@@ -181,10 +212,16 @@ F2XE<N> F2XE<N>::operator~() const
 
 	while (!newr.isZero())
 	{
-
+		auto q = r.toStdRepr() / newr.toStdRepr();
+		auto tmp = r;
+		r = newr;
+		newr = tmp - q * newr;
+		tmp = t;
+		t = newt;
+		newt = tmp - q * newt;
 	}
+	return t;
 }
-
 
 
 #endif /* F2XE_H_ */

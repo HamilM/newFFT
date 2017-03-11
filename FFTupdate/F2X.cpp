@@ -26,6 +26,7 @@ void F2X::resize(unsigned int len)
 	{
 		memcpy(new_array.get(), this->val.get(), len * sizeof(ValType));
 	}
+	this->val=new_array;
 	this->len = len;
 }
 
@@ -59,7 +60,7 @@ F2X& F2X::operator *=(const F2X& a)
 {
 	auto this_len = this->getFitLen();
 	auto a_len = a.getFitLen();
-	F2X newPoly(a_len + this_len);
+	F2X newPoly(a.deg() + this->deg());
 	this->resize(this->getFitLen() + a.getFitLen());
 	for (int i =  0 ; i < this_len * this->bitsInEntry ; i++)
 	{
@@ -86,11 +87,13 @@ F2X F2X::operator /(const F2X& a) const
 
 F2X& F2X::operator /=(const F2X& a)
 {
-	F2X ans(this->len);
+	F2X ans(this->deg());
 	F2X t(*this);
 	while(t.deg() >= a.deg())
 	{
-		//TODO: Finish the division
+		unsigned int addDeg = t.deg() - a.deg();
+		t += (a << (addDeg));
+		ans.flipCoefficient(addDeg);
 	}
 }
 
@@ -175,7 +178,7 @@ void F2X::setCoefficient(DegType d, const GF2& a)
 
 F2X::F2X(unsigned int i) : len (0), val(nullptr)
 {
-	this->resize(i);
+	this->resize(CIEL(i,this->bitsInEntry));
 }
 
 F2X F2X::operator <<(unsigned int a) const
@@ -206,6 +209,28 @@ F2X F2X::operator >>(unsigned int a) const
 	F2X ans(*this);
 	ans >>= a;
 	return ans;
+}
+
+bool F2X::operator ==(const F2X& a) const
+{
+	if (this->deg() != a.deg())
+	{
+		return false;
+	}
+	int len = this->deg() / this->bitsInEntry;
+	for (int i = 0 ; i < len ; ++i)
+	{
+		if ((*this)[i] != a[i])
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool F2X::operator !=(const F2X& a) const
+{
+	return !this->operator ==(a);
 }
 
 const F2X& F2X::operator >>=(unsigned int a)
