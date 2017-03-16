@@ -28,9 +28,6 @@ private:
 	DegType getFitLen() const;
 	ValType& operator[](size_t index);
 	const ValType& operator [](size_t index) const;
-	void flipCoefficient(DegType d);
-	void setCoefficient(DegType d, const GF2& a);
-	GF2 getCoefficient(DegType d) const;
 public:
 	F2X();
 	F2X(unsigned int i);

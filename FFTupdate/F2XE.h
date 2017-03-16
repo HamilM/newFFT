@@ -18,7 +18,6 @@
 
 extern __m128i clmul_mask;
 
-typedef uint64_t ValType;
 template<unsigned int N>
 class F2XE {
 private:
@@ -32,6 +31,7 @@ public:
 	F2XE();
 	F2XE(const F2XE<N>& a);
 	~F2XE(){};
+	F2XE<N>& sqr();
 	F2XE<N>& operator+=(const F2XE<N>& a);
 	F2XE<N> operator+(const F2XE<N>& a) const;
 	F2XE<N>& operator*=(const F2XE<N>& a);
@@ -181,7 +181,7 @@ F2X F2XE<N>::toStdRepr() const
 	{
 		if (this->getCoefficient(i))
 		{
-			ans.setCoefficient(a);
+			ans.setCoefficient(i, a);
 		}
 	}
 	return ans;
@@ -198,6 +198,14 @@ bool F2XE<N>::getCoefficient(DegType i) const
 	auto cell = this->val[cellIdx];
 	// If i-th bit in the representation is on - return true, else - false.
 	return cell & (1 << (i % this->bitsInEntry)) == 0 ? false : true;
+}
+
+template<unsigned int N>
+F2XE<N>& F2XE<N>::sqr()
+{
+	F2XE a(*this);
+	(*this)*=a;
+	return *this;
 }
 
 template<unsigned int N>

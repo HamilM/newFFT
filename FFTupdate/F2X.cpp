@@ -95,6 +95,7 @@ F2X& F2X::operator /=(const F2X& a)
 		t += (a << (addDeg));
 		ans.flipCoefficient(addDeg);
 	}
+	return (*this);
 }
 
 F2X::F2X(const F2X& a) : len(0), val(nullptr)
@@ -117,7 +118,7 @@ DegType F2X::deg() const
 		i++;
 		last>>=1;
 	}
-
+	return i;
 }
 
 void F2X::fit()
