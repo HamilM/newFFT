@@ -16,6 +16,7 @@ GF2::GF2(const GF2& g) : v(g.v) {}
 GF2& GF2::operator =(const GF2& a)
 {
 	this->v = a.v;
+	return *this;
 }
 
 bool GF2::operator ==(const GF2& a) const

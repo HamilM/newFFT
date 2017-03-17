@@ -32,6 +32,8 @@ public:
 	F2XE(const F2XE<N>& a);
 	~F2XE(){};
 	F2XE<N>& sqr();
+	F2XE<N> operator/(const F2XE<N> &a) const;
+	F2XE<N>& operator/= (const F2XE<N> &a);
 	F2XE<N>& operator+=(const F2XE<N>& a);
 	F2XE<N> operator+(const F2XE<N>& a) const;
 	F2XE<N>& operator*=(const F2XE<N>& a);
@@ -87,26 +89,14 @@ F2XE<N>& F2XE<N>::operator+=(const F2XE<N>& a)
 	return this;
 }
 
+
+
+
 template<unsigned int N>
 F2XE<N>& F2XE<N>::operator*=(const F2XE<N>& a)
 {
 	return *this;
 }
-
-template<>
-F2XE<64>& F2XE<64>::operator*=(const F2XE<64>& a)
-{
-	register __m128i l = _mm_loadu_si128((__m128i*)this->irred->val);
-	register __m128i t;
-	t = _mm_clmulepi64_si128(
-			_mm_loadu_si128((__m128i*)a.val),
-			_mm_loadu_si128((__m128i*)this->val),
-			0);
-	t = _mm_xor_si128(_mm_clmulepi64_si128(t,l,1), _mm_and_si128(t,clmul_mask));
-	t = _mm_xor_si128(_mm_clmulepi64_si128(t,l,1), t);
-	_mm_storel_epi64((__m128i*)this->val, t);
-}
-
 
 template<unsigned int N>
 F2XE<N> F2XE<N>::operator *(const F2XE<N>& a) const
@@ -115,11 +105,10 @@ F2XE<N> F2XE<N>::operator *(const F2XE<N>& a) const
 }
 
 template<>
-F2XE<64> F2XE<64>::operator* (const F2XE<64>& a) const
-{
-	F2XE<64> r(a);
-	return r*=(*this);
-}
+F2XE<64>& F2XE<64>::operator*=(const F2XE<64>& a);
+
+template<>
+F2XE<64> F2XE<64>::operator* (const F2XE<64>& a) const;
 
 template<unsigned int N>
 F2XE<N>& F2XE<N>::operator=(const F2XE<N>& a)
@@ -229,6 +218,21 @@ F2XE<N> F2XE<N>::operator~() const
 		newt = tmp - q * newt;
 	}
 	return t;
+}
+
+template<unsigned int N>
+F2XE<N> operator/(const F2XE<N> &a) const
+{
+	F2XE t(*this);
+	t/=a;
+	return t;
+}
+
+template<unsigned int N>
+F2XE<N>& operator/= (const F2XE<N> &a)
+{
+	F2XE n(~a);
+	(*this)*=n;
 }
 
 

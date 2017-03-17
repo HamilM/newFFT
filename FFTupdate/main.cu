@@ -9,7 +9,11 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
+#include "FFT.h"
 #include "ChunkTesting.cuh"
+#include "LinearizedPoly.h"
+#include "Basis.h"
+#include "F2XE.h"
 
 int main(int argc, char* argv[])
 {

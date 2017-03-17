@@ -18,18 +18,19 @@ private:
 	std::shared_ptr<F2XE<N>> e;
 public:
 	Basis(std::shared_ptr<F2XE<N>>& b, unsigned int l);
+	unsigned int getSize() const { return this->size; }
 	virtual ~Basis(){};
 	F2XE<N> operator[](unsigned int i) const;
 };
 
 template<unsigned int N>
-Basis<N>::Basis(std::shared_ptr<F2XE<N>>& b, unsigned int i) : size(l), e(std::shared_ptr(b), [](F2XE<N>* p){delete[] p;}){}
+Basis<N>::Basis(std::shared_ptr<F2XE<N>>& b, unsigned int i) : size(i), e(std::shared_ptr<F2XE<N>>(b), [](F2XE<N>* p){delete[] p;}){}
 
 template<unsigned int N>
 F2XE<N> Basis<N>::operator [](unsigned int i) const
 {
-	i = i & ((1<<l) - 1);
-	F2XE ans;
+	i = i & ((1<<this->l) - 1);
+	F2XE<N> ans;
 	int j = 0;
 	while(i>0)
 	{

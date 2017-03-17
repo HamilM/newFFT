@@ -18,7 +18,7 @@ private:
 	int len;
 	std::shared_ptr<F2XE<N>> v;
 public:
-	LinearizedPoly(const F2XE<N>&);
+	LinearizedPoly();
 	LinearizedPoly(const LinearizedPoly<N>&);
 	virtual ~LinearizedPoly();
 
@@ -27,16 +27,30 @@ public:
 };
 
 template<unsigned int N>
-LinearizedPoly<N>::LinearizedPoly(const F2XE<N>&) : len(2) ,  v(std::shared_ptr<F2XE<N>>(new F2XE<N>[2], [](F2XE<N>* p){delete[] p;}))
+LinearizedPoly<N>::LinearizedPoly() : len(1) ,  v(std::shared_ptr<F2XE<N>>(new F2XE<N>[1], [](F2XE<N>* p){delete[] p;}))
 {
+	this->v.get()[0].setUnit();
 }
 
 template<unsigned int N>
 LinearizedPoly<N>::LinearizedPoly(const LinearizedPoly<N>&a) : len(a.len), v(a.v){}
 
 template<unsigned int N>
-LinearizedPoly<N>& addItem(const F2XE<N>& a);
+LinearizedPoly<N>& LinearizedPoly<N>::addItem(const F2XE<N>& a)
 {
+	auto newLen = this->len + 1;
+	F2XE<N>* newPoly = new F2XE<N>[newLen];
+	for (int i = 0 ; i < this->len ; ++i)
+	{
+		newPoly[i+1] = this->v.get()[i];
+		newPoly[i+1].sqr();
+	}
+	for (int i = 0 ; i < this->len ; ++i)
+	{
+		newPoly[i] += this->v.get()[i]*a;
+	}
+	this->v=std::shared_ptr<F2XE<N>>(newPoly, [](F2XE<N>* p){delete[] p;});
+	return *this;
 }
 
 template<unsigned int N>
