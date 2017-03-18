@@ -35,22 +35,9 @@ FFT<N>::FFT(const std::shared_ptr<Basis<N>>& a, const F2XE<N>& s) : b(a), shift(
 		//Make evaluations of t at specific points.
 		for (unsigned int j = 0 ; j < 1<<(bLen -1 - i) ; ++j)
 		{
-			//TODO: This line is probably wrong!!!
-			//
-			//
-			//
-			//
-			w[i].get()[j] = t(this->shift + (*this->b)[2*j]) / (*this->b[1<<(i+1)]);
-			//
-			//
-			//
-			//
+			w[i].get()[j] = t(this->shift + (*this->b)[2*j]) / (*this->b[1<<(i)]);
 		}
-		// If not last iteration we add the next item from the basis to the linearized polynomial.
-		if (i != bLen -1)
-		{
-			t.addItem((*this->b)[1<<(i+1)]);
-		}
+		t.addItem((*this->b)[1<<(i)]);
 	}
 	this->w = std::shared_ptr<std::shared_ptr<F2XE<N>>>(w, [](std::shared_ptr<F2XE<N>>* p){delete[] p;});
 }

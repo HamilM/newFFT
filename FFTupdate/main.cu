@@ -14,6 +14,7 @@
 #include "LinearizedPoly.h"
 #include "Basis.h"
 #include "F2XE.h"
+#include "Chunk.h"
 
 int main(int argc, char* argv[])
 {

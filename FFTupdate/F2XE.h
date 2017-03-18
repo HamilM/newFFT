@@ -25,7 +25,6 @@ private:
 	static const unsigned int len = CIEL(N, sizeof(ValType));
 	static std::shared_ptr<F2XE<N>> irred;
 	ValType val[CIEL(N,sizeof(ValType))];
-	F2X toStdRepr() const;
 	bool getCoefficient(DegType i) const;
 public:
 	F2XE();
@@ -44,6 +43,7 @@ public:
 	bool isUnit() const;
 	void setZero();
 	void setUnit();
+	F2X toStdRepr() const;
 
 
 	// Sets the irreducible used by the elements of the field of this size to be
@@ -221,7 +221,7 @@ F2XE<N> F2XE<N>::operator~() const
 }
 
 template<unsigned int N>
-F2XE<N> operator/(const F2XE<N> &a) const
+F2XE<N> F2XE<N>::operator/(const F2XE<N> &a) const
 {
 	F2XE t(*this);
 	t/=a;
@@ -229,7 +229,7 @@ F2XE<N> operator/(const F2XE<N> &a) const
 }
 
 template<unsigned int N>
-F2XE<N>& operator/= (const F2XE<N> &a)
+F2XE<N>& F2XE<N>::operator/= (const F2XE<N> &a)
 {
 	F2XE n(~a);
 	(*this)*=n;

@@ -9,7 +9,7 @@
 
 GF2::GF2(): v(0) {}
 
-GF2::GF2(const unsigned char c) : v(c != 0) {}
+GF2::GF2(bool c) : v(c) {}
 
 GF2::GF2(const GF2& g) : v(g.v) {}
 
@@ -34,5 +34,10 @@ bool GF2::operator !=(const GF2& a) const
 	return !(this->operator==(a));
 }
 
-GF2::~GF2() {}
+GF2::~GF2() {
+}
 
+bool GF2::val() const
+{
+	return this->v;
+}

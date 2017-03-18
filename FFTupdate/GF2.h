@@ -10,14 +10,15 @@
 #include <stdbool.h>
 class GF2 {
 private:
-	unsigned char v;
+	bool v;
 public:
 	GF2();
-	GF2(const unsigned char c);
+	GF2(bool c);
 	GF2(const GF2& g);
 	GF2& operator= (const GF2&);
 	bool operator== (const GF2&) const;
 	bool operator!= (const GF2&) const;
+	bool val() const;
 	GF2 operator!() const;
 	~GF2();
 };
