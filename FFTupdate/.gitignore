@@ -8,4 +8,4 @@
 *.a
 *.make
 **/cmake_install.cmake
-
+**/Makefile
