@@ -8,4 +8,6 @@
 *.a
 *.make
 **/cmake_install.cmake
+**/core/**
+**/tags/**
 **/Makefile
