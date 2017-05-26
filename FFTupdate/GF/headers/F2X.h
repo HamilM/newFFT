@@ -22,6 +22,7 @@ private:
 	const static unsigned int bitsInEntry = BITS_IN_BYTE * sizeof(ValType);
 
 	std::shared_ptr<ValType> val;
+	unsigned int deg;
 	unsigned int len;
 	void resize(unsigned int len);
 	void fit();
@@ -39,7 +40,6 @@ public:
 	void flipCoefficient(DegType d);
 	void setCoefficient(DegType d, const GF2& a);
 	GF2 getCoefficient(DegType d) const;
-	DegType deg() const;
 	F2X operator+ (const F2X& a) const;
 	F2X& operator+= (const F2X& a);
 	F2X operator* (const F2X& a) const;

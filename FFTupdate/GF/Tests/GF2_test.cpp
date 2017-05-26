@@ -14,9 +14,20 @@ TEST(GF2Tests, TestAddition)
 
 TEST(F2XTests, GetCoefficient)
 {
-	F2X a = F2X();
+	ASSERT_NO_THROW({
+	F2X a = F2X(6);
 	GF2 b(true);
 	a.setCoefficient(5, b);
-	a.setCoefficient(2, b);
-	ASSERT_EQ(a.getCoefficient(5), b);
+	ASSERT_EQ(a.getCoefficient(5), b);});
+}
+
+TEST(F2XTests,  OffLimitsUsage)
+{
+	// Creating a polynomial of degree 4.
+	F2X a (4);
+	GF2 b(true);
+	// Trying to modify the coefficient of x^5, should throw an exception!
+	ASSERT_THROW({
+		a.setCoefficient(5, b);
+		}, std::exception);
 }
