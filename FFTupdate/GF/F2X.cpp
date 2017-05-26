@@ -1,11 +1,31 @@
 #include "F2X.h"
+#include <algorithm>
 #include <cstring>
 
 
-F2X::F2X() : deg(0), val(nullptr) {}
+F2X::F2X() : len(0), val(nullptr) {}
+
+DegType F2X::getDeg() const 
+{
+	if (0 == this->len)
+	{
+		return 0;
+	}
+	DegType i = this->getFitLen() - 1;
+	DegType last = (*this)[i];
+	i*= sizeof(ValType)*BITS_IN_BYTE;
+	last>>=1;
+	while (0  != last)
+	{
+		i++;
+		last>>=1;
+	}
+	return i;
+}
 
 
 // Copies the content of a.
+
 F2X& F2X::operator =(const F2X& a)
 {
 	this->resize(a.len);
@@ -27,6 +47,11 @@ void F2X::resize(unsigned int len)
 	{
 		memcpy(new_array.get(), this->val.get(), len * sizeof(ValType));
 	}
+	else
+	{
+		return;
+	}
+
 	this->val = new_array;
 	this->len = len;
 }
@@ -48,6 +73,7 @@ F2X& F2X::operator +=(const F2X& a)
 	{
 		this->val.get()[i] ^= a.val.get()[i];
 	}
+	return *this;
 }
 
 F2X F2X::operator *(const F2X& a) const
@@ -61,20 +87,26 @@ F2X& F2X::operator *=(const F2X& a)
 {
 	auto this_len = this->getFitLen();
 	auto a_len = a.getFitLen();
-	F2X newPoly(a.deg + this->deg);
+	auto a_deg = a.getDeg();
+	auto this_deg = this->getDeg();
+	F2X newPoly(a.getDeg() + this->getDeg());
 	this->resize(this->getFitLen() + a.getFitLen());
-	for (int i =  0 ; i < this_len * this->bitsInEntry ; i++)
+	for (int i =  0 ; i <= this_deg; i++)
 	{
-		for (int j =  0 ; j < a_len * this->bitsInEntry ; i++)
+		if (this->getCoefficient(i).val()==false)
 		{
-			if(this->getCoefficient(i)==true && this->getCoefficient(j)==true)
+			continue;
+		}
+		for (int j =  0 ; j <= a_deg; j++)
+		{
+			if(this->getCoefficient(i)==true && a.getCoefficient(j)==true)
 			{
 				newPoly.flipCoefficient(i+j);
 			}
 		}
 	}
 	(*this)=newPoly;
-
+	return *this;
 }
 
 F2X F2X::operator /(const F2X& a) const
@@ -88,18 +120,19 @@ F2X F2X::operator /(const F2X& a) const
 
 F2X& F2X::operator /=(const F2X& a)
 {
-	F2X ans(this->deg);
+	F2X ans(this->getDeg());
 	F2X t(*this);
-	while(t.deg >= a.deg)
+	while(t.getDeg() >= a.getDeg())
 	{
-		unsigned int addDeg = t.deg - a.deg;
+		unsigned int addDeg = t.getDeg() - a.getDeg();
 		t += (a << (addDeg));
 		ans.flipCoefficient(addDeg);
 	}
-	return (*this);
+	*this = ans;
+	return *this;
 }
 
-F2X::F2X(const F2X& a) : deg(0), val(nullptr)
+F2X::F2X(const F2X& a) : len(0), val(nullptr)
 {
 	*this = a;
 }
@@ -132,7 +165,7 @@ ValType& F2X::operator [](size_t index)
 {
 	if (index >= this->len)
 	{
-		throw std::exception();
+		this->resize(index+1);
 	}
 	return this->val.get()[index];
 }
@@ -147,6 +180,10 @@ void F2X::flipCoefficient(DegType d)
 
 GF2 F2X::getCoefficient(DegType d) const
 {
+	if(this->getDeg() < d)
+	{
+		return GF2(false);
+	}
 	auto inCellDeg = d % this->bitsInEntry;
 	return GF2(((*this)[d/this->bitsInEntry] & (1<< inCellDeg)) >> (inCellDeg));
 }
@@ -161,7 +198,7 @@ void F2X::setCoefficient(DegType d, const GF2& a)
 }
 
 
-F2X::F2X(unsigned int i) : deg (0), val(nullptr)
+F2X::F2X(unsigned int i) :  val(nullptr), len(0)
 {
 	this->resize(CIEL(i,this->bitsInEntry));
 }
@@ -175,9 +212,9 @@ F2X F2X::operator <<(unsigned int a) const
 
 const F2X& F2X::operator <<=(unsigned int a)
 {
-	unsigned int origDeg = this->deg;
-	this->resize(this->len + CIEL(a, this->bitsInEntry));
-	for (unsigned int i = origDeg + a - 1 ; i >= a ; --i)
+	unsigned int origDeg = this->getDeg();
+	this->resize(std::max(this->len, (unsigned int)(CIEL(this->getDeg() + a, this->bitsInEntry))));
+	for (unsigned int i = origDeg + a  ; i >= a ; --i)
 	{
 		this->setCoefficient(i, this->getCoefficient(i-a));
 	}
@@ -198,11 +235,11 @@ F2X F2X::operator >>(unsigned int a) const
 
 bool F2X::operator ==(const F2X& a) const
 {
-	if (this->deg != a.deg)
+	if (this->getDeg() != a.getDeg())
 	{
 		return false;
 	}
-	int len = this->len;
+	int len = std::min(this->len, a.len);
 	for (int i = 0 ; i < len ; ++i)
 	{
 		if ((*this)[i] != a[i])
@@ -220,8 +257,8 @@ bool F2X::operator !=(const F2X& a) const
 
 const F2X& F2X::operator >>=(unsigned int a)
 {
-	unsigned int origDeg = this->deg;
-	for(int i = this->deg - a  ; i > 0 ; --i)
+	unsigned int origDeg = this->getDeg();
+	for(int i = this->getDeg() - a  ; i > 0 ; --i)
 	{
 		this->setCoefficient(i, this->getCoefficient(i+a));
 	}

@@ -13,8 +13,8 @@
 #include "utils.h"
 #include "GF2.h"
 
-typedef unsigned long long ValType;
-typedef unsigned long long DegType;
+typedef uint32_t ValType;
+typedef uint32_t DegType;
 
 class F2X
 {
@@ -22,7 +22,6 @@ private:
 	const static unsigned int bitsInEntry = BITS_IN_BYTE * sizeof(ValType);
 
 	std::shared_ptr<ValType> val;
-	unsigned int deg;
 	unsigned int len;
 	void resize(unsigned int len);
 	void fit();
@@ -48,6 +47,7 @@ public:
 	F2X& operator/= (const F2X& a);
 	bool operator== (const F2X& a) const;
 	bool operator!= (const F2X& a) const;
+	DegType getDeg() const;
 
 	F2X operator<< (unsigned int a) const;
 	const F2X& operator<<= (unsigned int a);
