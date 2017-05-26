@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.1)
-project(GF2Tests)
 include_directories(${GTEST_INCLUDE_DIR} ${GF_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS})
 add_executable(gf2_tests GF2_test.cpp)
 target_link_libraries(gf2_tests gtest gtest_main ${GF_LIBRARY_PATH} )
