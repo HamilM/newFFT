@@ -10,6 +10,7 @@ F2X& F2X::operator =(const F2X& a)
 {
 	this->resize(a.len);
 	memcpy(this->val.get(), a.val.get(), sizeof(ValType)*a.len);
+	return *this;
 }
 void F2X::resize(unsigned int len)
 {
