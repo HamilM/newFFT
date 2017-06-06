@@ -10,6 +10,7 @@
 #include <vector>
 #include <memory>
 #include <cstdbool>
+#include <set>
 #include "utils.h"
 #include "GF2.h"
 
@@ -31,6 +32,7 @@ private:
 public:
 	F2X();
 	F2X(unsigned int i);
+	F2X(const std::set<DegType>& coefficients);
 	~F2X(){};
 	F2X(const F2X& a);
 	F2X& operator= (const F2X& a);

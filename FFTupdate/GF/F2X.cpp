@@ -269,3 +269,17 @@ const F2X& F2X::operator >>=(unsigned int a)
 	this->fit();
 	return *this;
 }
+
+F2X::F2X(const std::set<DegType> &coefficients) : len(0), val(NULL)
+{
+	if(!coefficients.size())
+	{
+		return;
+	}
+	this->len = CIEL(*coefficients.rbegin(), this->bitsInEntry);
+	this->val = std::shared_ptr<ValType>(new ValType[len], [](ValType* p){delete[] p;});
+	for (auto d : coefficients)
+	{
+		this->flipCoefficient(d);
+	}
+}
