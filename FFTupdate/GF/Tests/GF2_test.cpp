@@ -1,6 +1,9 @@
 #include <GF2.h>
 #include <F2X.h>
+#include <F2XE.h>
+#include <algorithm>
 #include <gtest/gtest.h>
+
 TEST(GF2Tests, TestAddition)
 {
 	ASSERT_NO_THROW({
@@ -129,3 +132,43 @@ TEST(F2XTests, Div)
 	b.flipCoefficient(50);
 	ASSERT_EQ(a/b, b);
 }
+
+TEST(F2XETests, UsingStdRepr)
+{
+    // We create an element in GF(2^63).
+	F2XE<63> a = F2XE<63>();
+
+    // Nullify it, just to be sure.
+	a.setZero();
+
+    // Create a polinomial, will be of degree 12.
+	F2X poly(12);
+
+    // Setting the polynomial to be x^1 + x^3 + x^6 + x^10.
+	DegType coefficients[] = {1,3,6,10};
+	for (int i = 0 ; i < 4 ; ++i)
+	{
+		poly.setCoefficient(coefficients[i], GF2(true));
+	}
+
+    a.fromStdRepr(poly);
+    F2X n = a.toStdRepr();
+	for (int i = 0 ; i < 4 ; ++i)
+	{
+		ASSERT_TRUE(n.getCoefficient(coefficients[i]).val()) << "Coefficient is not set!";
+	}
+	for (int i = 0 ; i < 12 ; ++i)
+	{
+		if (std::find(coefficients, coefficients + 4, i) == coefficients + 4)
+		{
+			ASSERT_FALSE(n.getCoefficient(i).val()) << "Coefficient is set!";
+		}
+	}
+}
+
+TEST(F2XETests, TestMultiplication)
+{
+
+}
+
+
