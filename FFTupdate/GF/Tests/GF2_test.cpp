@@ -133,6 +133,17 @@ TEST(F2XTests, Div)
 	ASSERT_EQ(a/b, b);
 }
 
+TEST(F2XTests, CreateFromSet)
+{
+	std::set<DegType> coefficients{1,2,10,100,200,450};
+	F2X p(coefficients);
+	for(DegType d : coefficients)
+	{
+		ASSERT_TRUE(p.getCoefficient(d).val());
+	}
+	ASSERT_EQ(p.getDeg(), *coefficients.rbegin());
+}
+
 TEST(F2XETests, UsingStdRepr)
 {
     // We create an element in GF(2^63).
@@ -165,10 +176,4 @@ TEST(F2XETests, UsingStdRepr)
 		}
 	}
 }
-
-TEST(F2XETests, TestMultiplication)
-{
-
-}
-
 
