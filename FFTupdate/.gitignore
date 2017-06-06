@@ -11,3 +11,6 @@
 **/core/**
 **/tags/**
 **/Makefile
+.settings/**
+.cproject
+.project
