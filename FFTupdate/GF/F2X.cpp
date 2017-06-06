@@ -1,6 +1,6 @@
-#include "F2X.h"
 #include <algorithm>
 #include <cstring>
+#include "F2X.h"
 
 
 F2X::F2X() : len(0), val(nullptr) {}
@@ -270,7 +270,7 @@ const F2X& F2X::operator >>=(unsigned int a)
 	return *this;
 }
 
-F2X::F2X(const std::set<DegType> &coefficients) : len(0), val(NULL)
+F2X::F2X(std::set<DegType> &coefficients) : len(0), val(NULL)
 {
 	if(!coefficients.size())
 	{

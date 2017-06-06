@@ -32,7 +32,7 @@ private:
 public:
 	F2X();
 	F2X(unsigned int i);
-	F2X(const std::set<DegType>& coefficients);
+	F2X(std::set<DegType>& coefficients);
 	~F2X(){};
 	F2X(const F2X& a);
 	F2X& operator= (const F2X& a);
