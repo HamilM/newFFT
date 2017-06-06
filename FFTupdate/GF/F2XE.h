@@ -13,19 +13,24 @@
 #include <cstdbool>
 #include <memory>
 #include <x86intrin.h>
+#include <exception>
+#include <GF2.h>
 #include "utils.h"
 #include "F2X.h"
 
 extern __m128i clmul_mask;
 
-template<unsigned int N>
+class F2XEException : public std::exception {};
+class PolynomialDegreeTwoHigh : public F2XEException {};
+
+template <unsigned int N>
 class F2XE {
 private:
 	static const unsigned int bitsInEntry = sizeof(ValType) * BITS_IN_BYTE;
 	static const unsigned int len = CIEL(N, sizeof(ValType));
 	static std::shared_ptr<F2XE<N>> irred;
 	ValType val[CIEL(N,sizeof(ValType))];
-	bool getCoefficient(DegType i) const;
+	GF2 getCoefficient(DegType i) const;
 public:
 	F2XE();
 	F2XE(const F2XE<N>& a);
@@ -44,22 +49,46 @@ public:
 	void setZero();
 	void setUnit();
 	F2X toStdRepr() const;
+	F2XE<N>& fromStdRepr(const F2X& n);
 
 
 	// Sets the irreducible used by the elements of the field of this size to be
 	// x^N + irred.
-	static void setIrred(const std::shared_ptr<F2XE<N>>& irred);
+	static void setIrred(const F2X& irred);
 
 
 };
 
-template<unsigned int N>
-std::shared_ptr<F2XE<N>>  F2XE<N>::irred = NULL;
+
+template<>
+F2XE<64>& F2XE<64>::operator*=(const F2XE<64>& a)
+{
+	register __m128i l = _mm_loadu_si128((__m128i*)this->irred->val);
+	register __m128i t;
+	t = _mm_clmulepi64_si128(
+			_mm_loadu_si128((__m128i*)a.val),
+			_mm_loadu_si128((__m128i*)this->val),
+			0);
+	t = _mm_xor_si128(_mm_clmulepi64_si128(t,l,1), _mm_and_si128(t,clmul_mask));
+	t = _mm_xor_si128(_mm_clmulepi64_si128(t,l,1), t);
+	_mm_storel_epi64((__m128i*)this->val, t);
+	return *this;
+}
+
+template<>
+F2XE<64> F2XE<64>::operator* (const F2XE<64>& a) const
+{
+	F2XE<64> r(a);
+	return r*=(*this);
+}
 
 template<unsigned int N>
-void F2XE<N>::setIrred(const std::shared_ptr<F2XE<N>>& irred)
+std::shared_ptr<F2XE<N>>  F2XE<N>::irred = std::make_shared<F2XE<N>>(F2XE<N>());
+
+template<unsigned int N>
+void F2XE<N>::setIrred(const F2X& irred)
 {
-	F2XE<N>::irred = irred;
+	F2XE<N>::irred->fromStdRepr(irred);
 }
 
 
@@ -168,7 +197,7 @@ F2X F2XE<N>::toStdRepr() const
 	GF2 a(true);
 	for (unsigned int i = 0 ; i < N - 1 ; ++i)
 	{
-		if (this->getCoefficient(i))
+		if (this->getCoefficient(i).val())
 		{
 			ans.setCoefficient(i, a);
 		}
@@ -177,7 +206,7 @@ F2X F2XE<N>::toStdRepr() const
 }
 
 template <unsigned int N>
-bool F2XE<N>::getCoefficient(DegType i) const
+GF2 F2XE<N>::getCoefficient(DegType i) const
 {
 	auto cellIdx = i / this->bitsInEntry;
 	if (cellIdx > this->len)
@@ -186,7 +215,8 @@ bool F2XE<N>::getCoefficient(DegType i) const
 	}
 	auto cell = this->val[cellIdx];
 	// If i-th bit in the representation is on - return true, else - false.
-	return cell & (1 << (i % this->bitsInEntry)) == 0 ? false : true;
+	return (cell & (1 << (i % this->bitsInEntry))) == 0 ? false : true;
+			
 }
 
 template<unsigned int N>
@@ -233,6 +263,24 @@ F2XE<N>& F2XE<N>::operator/= (const F2XE<N> &a)
 {
 	F2XE n(~a);
 	(*this)*=n;
+}
+
+template<unsigned int N>
+F2XE<N>& F2XE<N>::fromStdRepr(const F2X& n)
+{
+	if (n.getDeg() >= N)
+	{
+		throw PolynomialDegreeTwoHigh();
+	}
+    DegType d = n.getDeg();
+	for (int i = 0 ; i <= d ; ++i)
+	{
+        if (n.getCoefficient(i).val())
+        {
+            this->val[i / this->bitsInEntry] ^= (1 << (i % this->bitsInEntry));
+        }
+	}
+	return *this;
 }
 
 
