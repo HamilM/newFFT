@@ -177,3 +177,53 @@ TEST(F2XETests, UsingStdRepr)
 	}
 }
 
+TEST(F2XETests, MultiplyingSmallField)
+{
+    F2XE<3> a;
+    F2XE<3> b;
+    std::set<DegType> c_a{1,2};
+    std::set<DegType> c_b{0,1};
+    std::set<DegType> c_irred{0,1};
+    F2X p_a(c_a);
+    F2X p_b(c_b);
+    F2X p_irred(c_irred);
+    a.fromStdRepr(p_a); //<- Creating x + x^2.
+    b.fromStdRepr(p_b); // <- Creating 1 + x.
+    F2XE<3>::setIrred(p_irred); // <- Irreducible is x^3 + x + 1.
+    F2XE<3> c = a*b;
+    F2X p_c = c.toStdRepr();
+    ASSERT_TRUE(p_c.getCoefficient(0).val());
+    for (int i = 1 ; i < 3 ; ++i)
+    {
+        ASSERT_FALSE(p_c.getCoefficient(i).val());
+    }
+}
+
+TEST(F2XETests, MultiplyBiggerField)
+{
+    F2XE<64> a;
+    F2XE<64> b;
+    std::set<DegType> c_a{10, 63};
+    std::set<DegType> c_b{1, 40};
+    std::set<DegType> c_irred{0,1,3,4};
+    F2X p_a(c_a);
+    F2X p_b(c_b);
+    F2X p_irred(c_irred);
+    a.fromStdRepr(c_a);
+    b.fromStdRepr(c_b);
+    F2XE<64>::setIrred(p_irred);
+    F2XE<64> c = a*b;
+    F2X p_c = c.toStdRepr();
+    std::set<DegType> expected_coeffs{0,1,3,4,11,39,40,42,43,50};
+    for (int i = 0 ; i < 64 ; ++i)
+    {
+        if (expected_coeffs.find(i) == expected_coeffs.end())
+        {
+            ASSERT_FALSE(p_c.getCoefficient(i).val());
+        }
+        else
+        {
+            ASSERT_TRUE(p_c.getCoefficient(i).val());
+        }
+    }
+}
