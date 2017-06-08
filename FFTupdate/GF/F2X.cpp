@@ -2,7 +2,6 @@
 #include <cstring>
 #include "F2X.h"
 
-
 F2X::F2X() : len(0), val(nullptr) {}
 
 DegType F2X::getDeg() const 
@@ -172,6 +171,10 @@ ValType& F2X::operator [](size_t index)
 
 void F2X::flipCoefficient(DegType d)
 {
+    if (d/this->bitsInEntry >= this->len)
+    {
+        this->resize(d/this->bitsInEntry + 1);
+    }
 	auto inCellDeg = d % this->bitsInEntry;
 	auto currentCell = (*this)[d/this->bitsInEntry];
 	currentCell = currentCell ^ ((1<< inCellDeg));
@@ -214,9 +217,9 @@ const F2X& F2X::operator <<=(unsigned int a)
 {
 	unsigned int origDeg = this->getDeg();
 	this->resize(std::max(this->len, (unsigned int)(CIEL(this->getDeg() + a, this->bitsInEntry))));
-	for (unsigned int i = origDeg + a  ; i >= a ; --i)
+	for (unsigned int i = origDeg + a + 1 ; i >= a + 1 ; --i)
 	{
-		this->setCoefficient(i, this->getCoefficient(i-a));
+		this->setCoefficient(i - 1, this->getCoefficient(i-a - 1));
 	}
 	GF2 t(0);
 	for(unsigned int i = 0 ; i < a ; ++i)
@@ -270,7 +273,7 @@ const F2X& F2X::operator >>=(unsigned int a)
 	return *this;
 }
 
-F2X::F2X(std::set<DegType> &coefficients) : len(0), val(NULL)
+F2X::F2X(const std::set<DegType> &coefficients) : len(0), val(NULL)
 {
 	if(!coefficients.size())
 	{
@@ -278,8 +281,26 @@ F2X::F2X(std::set<DegType> &coefficients) : len(0), val(NULL)
 	}
 	this->len = CIEL(*coefficients.rbegin(), this->bitsInEntry);
 	this->val = std::shared_ptr<ValType>(new ValType[len], [](ValType* p){delete[] p;});
+    memset(this->val.get(), 0, sizeof(ValType)*len);
 	for (auto d : coefficients)
 	{
 		this->flipCoefficient(d);
 	}
+}
+
+F2X &F2X::operator%=(const F2X &a)
+{
+    F2X t(*this);
+    while(t.getDeg() >= a.getDeg())
+    {
+        unsigned int addDeg = t.getDeg() - a.getDeg();
+        t += (a << (addDeg));
+    }
+    *this = t;
+    return *this;
+}
+
+F2X F2X::operator%(const F2X &a) const {
+    F2X result(*this);
+    return result%=a;
 }

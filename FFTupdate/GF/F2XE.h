@@ -21,15 +21,16 @@
 extern __m128i clmul_mask;
 
 class F2XEException : public std::exception {};
-class PolynomialDegreeTwoHigh : public F2XEException {};
+class PolynomialDegreeTooHigh : public F2XEException {};
 
 template <unsigned int N>
 class F2XE {
 private:
 	static const unsigned int bitsInEntry = sizeof(ValType) * BITS_IN_BYTE;
-	static const unsigned int len = CIEL(N, sizeof(ValType));
-	static std::shared_ptr<F2XE<N>> irred;
-	ValType val[CIEL(N,sizeof(ValType))];
+	static const unsigned int len = CIEL(N, 8*sizeof(ValType));
+    static F2XE<N> irred_stripped;
+	static F2X irred;
+	ValType val[CIEL(N,8*sizeof(ValType))];
 	GF2 getCoefficient(DegType i) const;
 public:
 	F2XE();
@@ -59,36 +60,27 @@ public:
 
 };
 
+template<>
+F2XE<64>& F2XE<64>::operator*=(const F2XE<64>& a);
 
 template<>
-F2XE<64>& F2XE<64>::operator*=(const F2XE<64>& a)
-{
-	register __m128i l = _mm_loadu_si128((__m128i*)this->irred->val);
-	register __m128i t;
-	t = _mm_clmulepi64_si128(
-			_mm_loadu_si128((__m128i*)a.val),
-			_mm_loadu_si128((__m128i*)this->val),
-			0);
-	t = _mm_xor_si128(_mm_clmulepi64_si128(t,l,1), _mm_and_si128(t,clmul_mask));
-	t = _mm_xor_si128(_mm_clmulepi64_si128(t,l,1), t);
-	_mm_storel_epi64((__m128i*)this->val, t);
-	return *this;
-}
+F2XE<64> F2XE<64>::operator* (const F2XE<64>& a) const;
 
-template<>
-F2XE<64> F2XE<64>::operator* (const F2XE<64>& a) const
-{
-	F2XE<64> r(a);
-	return r*=(*this);
-}
 
 template<unsigned int N>
-std::shared_ptr<F2XE<N>>  F2XE<N>::irred = std::make_shared<F2XE<N>>(F2XE<N>());
+F2X  F2XE<N>::irred = F2X();
+
+template <unsigned int N>
+F2XE<N> F2XE<N>::irred_stripped = F2XE<N>(F2XE<N>());
+
+
 
 template<unsigned int N>
 void F2XE<N>::setIrred(const F2X& irred)
 {
-	F2XE<N>::irred->fromStdRepr(irred);
+	F2XE<N>::irred = irred;
+    F2XE<N>::irred_stripped.fromStdRepr(irred);
+    F2XE<N>::irred.flipCoefficient(N);
 }
 
 
@@ -98,7 +90,7 @@ F2XE<N>::F2XE(){}
 template<unsigned int N>
 F2XE<N>::F2XE(const F2XE<N>& a)
 {
-	memcpy(this->val, a.val, sizeof(a.val));
+	memcpy(this->val, a.val, CIEL(N, this->bitsInEntry) * sizeof(ValType));
 }
 
 template<unsigned int N>
@@ -115,7 +107,7 @@ F2XE<N>& F2XE<N>::operator+=(const F2XE<N>& a)
 		{
 			this->val[i] ^= a.val[i];
 		}
-	return this;
+	return *this;
 }
 
 
@@ -124,20 +116,19 @@ F2XE<N>& F2XE<N>::operator+=(const F2XE<N>& a)
 template<unsigned int N>
 F2XE<N>& F2XE<N>::operator*=(const F2XE<N>& a)
 {
+    F2X t = (this->toStdRepr() * a.toStdRepr()) % this->irred;
+    this->fromStdRepr(t);
 	return *this;
 }
 
 template<unsigned int N>
 F2XE<N> F2XE<N>::operator *(const F2XE<N>& a) const
 {
-	return a;
+    F2XE<N> ans(*this);
+	return ans*=a;
 }
 
-template<>
-F2XE<64>& F2XE<64>::operator*=(const F2XE<64>& a);
 
-template<>
-F2XE<64> F2XE<64>::operator* (const F2XE<64>& a) const;
 
 template<unsigned int N>
 F2XE<N>& F2XE<N>::operator=(const F2XE<N>& a)
@@ -180,7 +171,7 @@ bool F2XE<N>::isUnit() const
 template <unsigned int N>
 void F2XE<N>::setZero()
 {
-	memset(this->val, 0, sizeof(this->val));
+	memset(this->val, 0, this->len * sizeof(this->val[0]));
 }
 
 template <unsigned int N>
@@ -195,7 +186,7 @@ F2X F2XE<N>::toStdRepr() const
 {
 	F2X ans(N - 1);
 	GF2 a(true);
-	for (unsigned int i = 0 ; i < N - 1 ; ++i)
+	for (unsigned int i = 0 ; i <= N - 1 ; ++i)
 	{
 		if (this->getCoefficient(i).val())
 		{
@@ -232,20 +223,20 @@ F2XE<N> F2XE<N>::operator~() const
 {
 	F2XE<N> t;
 	t.setZero();
-	F2XE<N> r(*this->irred);
+	F2XE<N> r(this->irred_stripped);
 	F2XE<N> newr(*this);
 	F2XE<N> newt;
 	newt.setUnit();
-
+    F2XE<N> q;
 	while (!newr.isZero())
 	{
-		auto q = r.toStdRepr() / newr.toStdRepr();
+        q.fromStdRepr(r.toStdRepr() / newr.toStdRepr());
 		auto tmp = r;
 		r = newr;
-		newr = tmp - q * newr;
+		newr = tmp + q * newr;
 		tmp = t;
 		t = newt;
-		newt = tmp - q * newt;
+		newt = tmp + q * newt;
 	}
 	return t;
 }
@@ -270,8 +261,9 @@ F2XE<N>& F2XE<N>::fromStdRepr(const F2X& n)
 {
 	if (n.getDeg() >= N)
 	{
-		throw PolynomialDegreeTwoHigh();
+		throw PolynomialDegreeTooHigh();
 	}
+     memset(this->val, 0, this->len * sizeof(this->val[0]));
     DegType d = n.getDeg();
 	for (int i = 0 ; i <= d ; ++i)
 	{
