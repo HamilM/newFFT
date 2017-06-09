@@ -1,9 +1,10 @@
+#include <algorithm>
+#include <gtest/gtest.h>
 #include <GF2.h>
 #include <F2X.h>
 #include <F2XE.h>
-#include <algorithm>
-#include <gtest/gtest.h>
-
+#include <Basis.h>
+#include <LinearizedPoly.h>
 TEST(GF2Tests, TestAddition)
 {
 	ASSERT_NO_THROW({
@@ -227,3 +228,54 @@ TEST(F2XETests, MultiplyBiggerField)
         }
     }
 }
+
+TEST (BasisTests, BasisQueryTests)
+{
+    std::set<DegType> c_a{1};
+    std::set<DegType> c_b{35};
+    std::set<DegType> c_c{13};
+    std::vector<F2XE<64>> basis_elements;
+    Basis<F2XE<64>> b;
+    b.add(F2XE<64>(c_a));
+    b.add(F2XE<64>(c_b));
+    b.add(F2XE<64>(c_c));
+
+    ASSERT_TRUE(b[0].isZero());
+    ASSERT_EQ(b[1], F2XE<64>(c_a));
+    ASSERT_EQ(b[2], F2XE<64>(c_b));
+    ASSERT_EQ(b[4], F2XE<64>(c_c));
+    ASSERT_EQ(b[1]+b[2], b[3]);
+    ASSERT_EQ(b[1] + b[4], b[5]);
+}
+
+
+TEST(LinearizedPolyTests, LinearizedPolyEvaluationTest)
+{
+    // We create a linearized polynomial for a basis.
+    std::set<DegType> c_a{1};
+    std::set<DegType> c_b{2};
+    std::set<DegType> c_c{3};
+    std::set<DegType> c_d{4};
+
+    LinearizedPoly<64> lp;
+
+    ASSERT_TRUE(lp(F2XE<64>().setZero()).isZero());
+    ASSERT_FALSE(lp(F2XE<64>(c_a)).isZero());
+
+    lp.addItem(F2XE<64>(c_a));
+    lp.addItem(F2XE<64>(c_b));
+    lp.addItem(F2XE<64>(c_c));
+
+    Basis<F2XE<64>> b;
+    b.add(F2XE<64>(c_a));
+    b.add(F2XE<64>(c_b));
+    b.add(F2XE<64>(c_c));
+
+    for (int i = 0 ; i < 1<<3 ; ++i)
+    {
+        ASSERT_TRUE(lp(b[i]).isZero());
+    }
+    ASSERT_FALSE(lp(F2XE<64>(c_d)).isZero());
+}
+
+
