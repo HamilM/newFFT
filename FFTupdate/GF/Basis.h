@@ -8,38 +8,50 @@
 #ifndef BASIS_H_
 #define BASIS_H_
 #include <memory>
+#include <vector>
 #include "F2XE.h"
 
-template <unsigned int N>
+template <typename T>
 class Basis
 {
 private:
-	unsigned int size;
-	std::shared_ptr<F2XE<N>> e;
+	std::vector<T> e;
 public:
-	Basis(std::shared_ptr<F2XE<N>>& b, unsigned int l);
-	unsigned int getSize() const { return this->size; }
+    Basis(){};
+	Basis(const std::vector<T>& b);
+	unsigned long getSize() const { return e.size(); }
+    Basis& add(const T& a);
 	virtual ~Basis(){};
-	F2XE<N> operator[](unsigned int i) const;
+	T operator[](unsigned int i) const;
 };
 
-template<unsigned int N>
-Basis<N>::Basis(std::shared_ptr<F2XE<N>>& b, unsigned int i) : size(i), e(std::shared_ptr<F2XE<N>>(b), [](F2XE<N>* p){delete[] p;}){}
 
-template<unsigned int N>
-F2XE<N> Basis<N>::operator [](unsigned int i) const
+template <typename T>
+T Basis<T>::operator [](unsigned int i) const
 {
-	i = i & ((1<<this->l) - 1);
-	F2XE<N> ans;
+	i = i & ((1<<e.size()) - 1);
+	T ans;
 	int j = 0;
 	while(i>0)
 	{
 		if (i&1)
 		{
-			ans += e.get()[j];
+			ans += e[j];
 		}
 		j++;
+		i >>=1 ;
 	}
 	return ans;
 }
+
+template <typename T>
+Basis<T>::Basis(const std::vector<T> &b) : e(b) {}
+
+template <typename T>
+Basis<T> &Basis<T>::add(const T &a)
+{
+    e.push_back(a);
+    return *this;
+};
+
 #endif /* BASIS_H_ */

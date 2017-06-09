@@ -9,47 +9,52 @@
 #define LINEARIZEDPOLY_H_
 
 #include <memory>
+#include <vector>
 #include "F2XE.h"
 
 template<unsigned int N>
 class LinearizedPoly
 {
 private:
-	int len;
-	std::shared_ptr<F2XE<N>> v;
+	std::vector<F2XE<N>> v;
 public:
 	LinearizedPoly();
 	LinearizedPoly(const LinearizedPoly<N>&);
-	virtual ~LinearizedPoly();
+
+	virtual ~LinearizedPoly(){};
 
 	LinearizedPoly<N>& addItem(const F2XE<N>& a);
 	F2XE<N> operator()(const F2XE<N>& a);
 };
 
 template<unsigned int N>
-LinearizedPoly<N>::LinearizedPoly() : len(1) ,  v(std::shared_ptr<F2XE<N>>(new F2XE<N>[1], [](F2XE<N>* p){delete[] p;}))
+LinearizedPoly<N>::LinearizedPoly()
 {
-	this->v.get()[0].setUnit();
+	this->v.push_back(F2XE<N>().setUnit());
 }
 
 template<unsigned int N>
-LinearizedPoly<N>::LinearizedPoly(const LinearizedPoly<N>&a) : len(a.len), v(a.v){}
+LinearizedPoly<N>::LinearizedPoly(const LinearizedPoly<N>&a)
+{
+	this->v = a.v;
+}
 
 template<unsigned int N>
 LinearizedPoly<N>& LinearizedPoly<N>::addItem(const F2XE<N>& a)
 {
-	auto newLen = this->len + 1;
-	F2XE<N>* newPoly = new F2XE<N>[newLen];
-	for (int i = 0 ; i < this->len ; ++i)
+	auto newLen = this->v.size() + 1;
+	std::vector<F2XE<N>> newPoly(newLen);
+	for (int i = 0 ; i < this->v.size(); ++i)
 	{
-		newPoly[i+1] = this->v.get()[i];
+		newPoly[i+1] = this->v[i];
 		newPoly[i+1].sqr();
 	}
-	for (int i = 0 ; i < this->len ; ++i)
+	F2XE<N> multiplier = this->operator()(a);
+	for (int i = 0 ; i < this->v.size(); ++i)
 	{
-		newPoly[i] += this->v.get()[i]*a;
+		newPoly[i] += this->v[i]*multiplier;
 	}
-	this->v=std::shared_ptr<F2XE<N>>(newPoly, [](F2XE<N>* p){delete[] p;});
+	this->v = newPoly;
 	return *this;
 }
 
@@ -58,15 +63,15 @@ F2XE<N> LinearizedPoly<N>::operator()(const F2XE<N>& a)
 {
 	F2XE<N> n(a);
 	F2XE<N> ans;
-	if (this->len == 0)
+	if (this->v.size() == 0)
 	{
 		ans.setZero();
 		return ans;
 	}
-	ans = this->v.get()[0];
-	for(int i = 1 ; i < len ; ++i )
+	//ans = this->v[0];
+	for(int i = 0 ; i < v.size() ; ++i )
 	{
-		ans += n*this->v.get()[i];
+		ans += n*this->v[i];
 		n.sqr();
 	}
 }

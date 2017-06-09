@@ -34,6 +34,7 @@ private:
 	GF2 getCoefficient(DegType i) const;
 public:
 	F2XE();
+    F2XE(const std::set<DegType>& coefficients);
 	F2XE(const F2XE<N>& a);
 	~F2XE(){};
 	F2XE<N>& sqr();
@@ -45,10 +46,12 @@ public:
 	F2XE<N> operator*(const F2XE<N>& a) const;
 	F2XE<N>& operator=(const F2XE<N>& a);
 	F2XE<N> operator~() const; //<- Calculates the inverse of an element
+    bool operator== (const F2XE<N>& a) const;
+    bool operator!= (const F2XE<N>& a) const;
 	bool isZero() const;
 	bool isUnit() const;
-	void setZero();
-	void setUnit();
+	F2XE & setZero();
+	F2XE & setUnit();
 	F2X toStdRepr() const;
 	F2XE<N>& fromStdRepr(const F2X& n);
 
@@ -85,7 +88,10 @@ void F2XE<N>::setIrred(const F2X& irred)
 
 
 template<unsigned int N>
-F2XE<N>::F2XE(){}
+F2XE<N>::F2XE()
+{
+    this->setZero();
+}
 
 template<unsigned int N>
 F2XE<N>::F2XE(const F2XE<N>& a)
@@ -169,16 +175,18 @@ bool F2XE<N>::isUnit() const
 }
 
 template <unsigned int N>
-void F2XE<N>::setZero()
+F2XE<N> & F2XE<N>::setZero()
 {
 	memset(this->val, 0, this->len * sizeof(this->val[0]));
+    return *this;
 }
 
 template <unsigned int N>
-void F2XE<N>::setUnit()
+F2XE<N> & F2XE<N>::setUnit()
 {
 	this->setZero();
 	this->val[0] = 1;
+    return *this;
 }
 
 template <unsigned int N>
@@ -206,7 +214,7 @@ GF2 F2XE<N>::getCoefficient(DegType i) const
 	}
 	auto cell = this->val[cellIdx];
 	// If i-th bit in the representation is on - return true, else - false.
-	return (cell & (1 << (i % this->bitsInEntry))) == 0 ? false : true;
+	return (cell & (1 << (i % this->bitsInEntry))) != 0;
 			
 }
 
@@ -254,6 +262,7 @@ F2XE<N>& F2XE<N>::operator/= (const F2XE<N> &a)
 {
 	F2XE n(~a);
 	(*this)*=n;
+    return *this;
 }
 
 template<unsigned int N>
@@ -265,7 +274,7 @@ F2XE<N>& F2XE<N>::fromStdRepr(const F2X& n)
 	}
      memset(this->val, 0, this->len * sizeof(this->val[0]));
     DegType d = n.getDeg();
-	for (int i = 0 ; i <= d ; ++i)
+	for (unsigned int i = 0 ; i <= d ; ++i)
 	{
         if (n.getCoefficient(i).val())
         {
@@ -273,6 +282,24 @@ F2XE<N>& F2XE<N>::fromStdRepr(const F2X& n)
         }
 	}
 	return *this;
+}
+
+template <unsigned int N>
+bool F2XE<N>::operator==(const F2XE<N> &a) const
+{
+    return !(this->operator!=(a));
+}
+
+template <unsigned int N>
+bool F2XE<N>::operator!=(const F2XE<N> &a) const
+{
+    return (bool)memcmp(a.val, this->val, this->len * sizeof(this->val[0]));
+}
+
+template<unsigned int N>
+F2XE<N>::F2XE(const std::set<DegType> &coefficients)
+{
+    this->fromStdRepr(F2X(coefficients));
 }
 
 
