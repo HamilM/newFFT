@@ -10,6 +10,7 @@ add_library(gf STATIC
         ${GF_SOURCE_DIR}/F2XE.cpp
         ${GF_SOURCE_DIR}/GF2.cpp
         ${GF_SOURCE_DIR}/Basis.h
-        ${GF_SOURCE_DIR}/LinearizedPoly.h)
+        ${GF_SOURCE_DIR}/LinearizedPoly.h
+        ${GF_SOURCE_DIR}/F2XEX.h)
 target_include_directories(gf PUBLIC ${CUDA_INCLUDE_DIRS} ${GF_INCLUDE_DIR}) 
 ADD_SUBDIRECTORY(Tests)
