@@ -22,18 +22,14 @@ class F2X
 private:
 	const static unsigned int bitsInEntry = BITS_IN_BYTE * sizeof(ValType);
 
-	std::shared_ptr<ValType> val;
-	unsigned int len;
-	void resize(unsigned int len);
-	void fit();
-	DegType getFitLen() const;
+	std::vector<ValType> val;
 	ValType& operator[](size_t index);
 	const ValType& operator [](size_t index) const;
 public:
 	F2X();
 	F2X(unsigned int i);
 	F2X(const std::set<DegType>& coefficients);
-	~F2X(){};
+	~F2X() {};
 	F2X(const F2X& a);
 	F2X& operator= (const F2X& a);
 
@@ -57,6 +53,7 @@ public:
 	const F2X& operator<<= (unsigned int a);
 	F2X operator>> (unsigned int a) const;
 	const F2X& operator>>= (unsigned int a);
+	F2X& resize(unsigned long len);
 };
 
 

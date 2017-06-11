@@ -2,17 +2,22 @@
 #include <cstring>
 #include "F2X.h"
 
-F2X::F2X() : len(0), val(nullptr) {}
+F2X::F2X() : val(std::vector<ValType>()) {}
 
-DegType F2X::getDeg() const 
+DegType F2X::getDeg() const
 {
-	if (0 == this->len)
+	if (0 == this->val.size())
 	{
 		return 0;
 	}
-	DegType i = this->getFitLen() - 1;
-	DegType last = (*this)[i];
-	i*= sizeof(ValType)*BITS_IN_BYTE;
+	auto it = this->val.rbegin();
+    while (*it == 0 && it != this->val.rend() ) { ++it; }
+    if (it == this->val.rend())
+    {
+        --it;
+    }
+    ValType last = *it;
+    DegType i = (this->val.rend() - it - 1) * sizeof(ValType)*BITS_IN_BYTE;
 	last>>=1;
 	while (0  != last)
 	{
@@ -27,11 +32,11 @@ DegType F2X::getDeg() const
 
 F2X& F2X::operator =(const F2X& a)
 {
-	this->resize(a.len);
-	memcpy(this->val.get(), a.val.get(), sizeof(ValType)*a.len);
+	//this->resize(a.len);
+	this->val = a.val;
 	return *this;
 }
-void F2X::resize(unsigned int len)
+/*void F2X::resize(unsigned int len)
 {
 	std::shared_ptr<ValType> new_array = std::shared_ptr<ValType>(new ValType[len], [](ValType* p){delete[] p;});
 	if (len > this->len)
@@ -53,7 +58,7 @@ void F2X::resize(unsigned int len)
 
 	this->val = new_array;
 	this->len = len;
-}
+}*/
 
 F2X F2X::operator +(const F2X& a) const
 {
@@ -64,13 +69,9 @@ F2X F2X::operator +(const F2X& a) const
 
 F2X& F2X::operator +=(const F2X& a)
 {
-	if (a.len > this->len)
+	for (int i = 0 ;  i < a.val.size() ; ++i)
 	{
-		this->resize(a.len);
-	}
-	for (int i = 0 ;  i < a.len ; ++i)
-	{
-		this->val.get()[i] ^= a.val.get()[i];
+		this->val[i] ^= a.val[i];
 	}
 	return *this;
 }
@@ -83,20 +84,18 @@ F2X F2X::operator *(const F2X& a) const
 }
 
 F2X& F2X::operator *=(const F2X& a)
-{
-	auto this_len = this->getFitLen();
-	auto a_len = a.getFitLen();
+{ ;
 	auto a_deg = a.getDeg();
 	auto this_deg = this->getDeg();
-	F2X newPoly(a.getDeg() + this->getDeg());
-	this->resize(this->getFitLen() + a.getFitLen());
-	for (int i =  0 ; i <= this_deg; i++)
+	F2X newPoly(a_deg + this_deg);
+	this->resize(CIEL(this_deg +a_deg , this->bitsInEntry));
+	for (DegType i =  0 ; i <= this_deg; i++)
 	{
-		if (this->getCoefficient(i).val()==false)
+		if (!this->getCoefficient(i).val())
 		{
 			continue;
 		}
-		for (int j =  0 ; j <= a_deg; j++)
+		for (DegType j =  0 ; j <= a_deg; j++)
 		{
 			if(this->getCoefficient(i)==true && a.getCoefficient(j)==true)
 			{
@@ -131,47 +130,33 @@ F2X& F2X::operator /=(const F2X& a)
 	return *this;
 }
 
-F2X::F2X(const F2X& a) : len(0), val(nullptr)
+F2X::F2X(const F2X& a)
 {
 	*this = a;
 }
 
 
-void F2X::fit()
-{
-	int i = this->len - 1;
-	while((*this)[i] == 0 && i > 0) { --i; };
-	this->resize(i+1);
-}
-
-DegType F2X::getFitLen() const
-{
-	int i = this->len - 1;
-	while((*this)[i] == 0 && i > 0) { --i; };
-	return i+1;
-}
-
 const ValType& F2X::operator [](size_t index) const
 {
-	if (index >= this->len)
+	if (index >= this->val.size())
 	{
 		throw std::exception();
 	}
-	return this->val.get()[index];
+	return this->val[index];
 }
 
 ValType& F2X::operator [](size_t index)
 {
-	if (index >= this->len)
+	if (index >= this->val.size())
 	{
-		this->resize(index+1);
+        this->resize(index+1);
 	}
-	return this->val.get()[index];
+	return this->val[index];
 }
 
 void F2X::flipCoefficient(DegType d)
 {
-    if (d/this->bitsInEntry >= this->len)
+    if (d/this->bitsInEntry >= this->val.size())
     {
         this->resize(d/this->bitsInEntry + 1);
     }
@@ -188,7 +173,7 @@ GF2 F2X::getCoefficient(DegType d) const
 		return GF2(false);
 	}
 	auto inCellDeg = d % this->bitsInEntry;
-	return GF2(((*this)[d/this->bitsInEntry] & (1<< inCellDeg)) >> (inCellDeg));
+	return GF2((bool)((*this)[d/this->bitsInEntry] & (1<< inCellDeg)));
 }
 
 
@@ -201,7 +186,7 @@ void F2X::setCoefficient(DegType d, const GF2& a)
 }
 
 
-F2X::F2X(unsigned int i) :  val(nullptr), len(0)
+F2X::F2X(unsigned int i)
 {
 	this->resize(CIEL(i,this->bitsInEntry));
 }
@@ -216,7 +201,7 @@ F2X F2X::operator <<(unsigned int a) const
 const F2X& F2X::operator <<=(unsigned int a)
 {
 	unsigned int origDeg = this->getDeg();
-	this->resize(std::max(this->len, (unsigned int)(CIEL(this->getDeg() + a, this->bitsInEntry))));
+	this->resize(std::max((DegType)this->val.size(), (CIEL(this->getDeg() + a, this->bitsInEntry))));
 	for (unsigned int i = origDeg + a + 1 ; i >= a + 1 ; --i)
 	{
 		this->setCoefficient(i - 1, this->getCoefficient(i-a - 1));
@@ -242,8 +227,8 @@ bool F2X::operator ==(const F2X& a) const
 	{
 		return false;
 	}
-	int len = std::min(this->len, a.len);
-	for (int i = 0 ; i < len ; ++i)
+	unsigned long len = std::min(this->val.size(), a.val.size());
+	for (unsigned long i = 0 ; i < len ; ++i)
 	{
 		if ((*this)[i] != a[i])
 		{
@@ -261,27 +246,26 @@ bool F2X::operator !=(const F2X& a) const
 const F2X& F2X::operator >>=(unsigned int a)
 {
 	unsigned int origDeg = this->getDeg();
-	for(int i = this->getDeg() - a  ; i > 0 ; --i)
+	for(DegType i = this->getDeg() - a  ; i > 0 ; --i)
 	{
 		this->setCoefficient(i, this->getCoefficient(i+a));
 	}
-	for (int i = origDeg - a + 1; i <= origDeg ; ++i)
+	for (DegType i = origDeg - a + 1; i <= origDeg ; ++i)
 	{
 		this->setCoefficient(i, 0);
 	}
-	this->fit();
 	return *this;
 }
 
-F2X::F2X(const std::set<DegType> &coefficients) : len(0), val(NULL)
+F2X::F2X(const std::set<DegType> &coefficients)
 {
 	if(!coefficients.size())
 	{
 		return;
 	}
-	this->len = CIEL(*coefficients.rbegin(), this->bitsInEntry);
-	this->val = std::shared_ptr<ValType>(new ValType[len], [](ValType* p){delete[] p;});
-    memset(this->val.get(), 0, sizeof(ValType)*len);
+	uint32_t len = CIEL(*coefficients.rbegin(), this->bitsInEntry);
+	this->val = std::vector<ValType>(len);
+    memset(this->val.data(), 0, sizeof(ValType)*len);
 	for (auto d : coefficients)
 	{
 		this->flipCoefficient(d);
@@ -303,4 +287,12 @@ F2X &F2X::operator%=(const F2X &a)
 F2X F2X::operator%(const F2X &a) const {
     F2X result(*this);
     return result%=a;
+}
+
+F2X &F2X::resize(unsigned long len)
+{
+    unsigned long prev_size = this->val.size();
+    this->val.resize(len);
+    memset(this->val.data() + prev_size, 0, sizeof(this->val[0])*(len - prev_size));
+    return *this;
 }

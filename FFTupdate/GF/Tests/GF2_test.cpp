@@ -47,7 +47,7 @@ TEST(F2XTests, Addition)
 	c.flipCoefficient(1);
 	F2X d;
 	ASSERT_EQ(c, a+b);
-	ASSERT_EQ(d, a+a);
+	ASSERT_TRUE(d == a+a);
 	a.flipCoefficient(100);
 	b.flipCoefficient(101);
 	c.flipCoefficient(100);
