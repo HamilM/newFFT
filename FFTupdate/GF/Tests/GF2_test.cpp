@@ -5,6 +5,7 @@
 #include <F2XE.h>
 #include <Basis.h>
 #include <LinearizedPoly.h>
+#include <F2XEX.h>
 TEST(GF2Tests, TestAddition)
 {
 	ASSERT_NO_THROW({
@@ -279,3 +280,37 @@ TEST(LinearizedPolyTests, LinearizedPolyEvaluationTest)
 }
 
 
+TEST(FFTTests, FFTZeroTest)
+{
+
+    std::vector<F2XE<64>> v_b;
+    v_b.push_back(F2XE<64>(std::set<DegType>({0})));
+    v_b.push_back(F2XE<64>(std::set<DegType>({1})));
+    v_b.push_back(F2XE<64>(std::set<DegType>({2})));
+    Basis<F2XE<64>> b(v_b);
+    F2XEX<64> p;
+    p.resize(4);
+    std::shared_ptr<std::vector<F2XE<64>>> res = p.FFT(b);
+    for (int i = 0 ; i < res->size() ; ++i)
+    {
+        ASSERT_TRUE((*res)[i].isZero());
+    }
+}
+
+TEST(FFTTests, FFTUnitTest)
+{
+
+    std::vector<F2XE<64>> v_b;
+    v_b.push_back(F2XE<64>(std::set<DegType>({0})));
+    v_b.push_back(F2XE<64>(std::set<DegType>({1})));
+    v_b.push_back(F2XE<64>(std::set<DegType>({2})));
+    Basis<F2XE<64>> b(v_b);
+    F2XEX<64> p;
+    p.resize(4);
+    p[0].setUnit();
+    std::shared_ptr<std::vector<F2XE<64>>> res = p.FFT(b);
+    for (int i = 0 ; i < res->size() ; ++i)
+    {
+        ASSERT_TRUE((*res)[i].isUnit());
+    }
+}
